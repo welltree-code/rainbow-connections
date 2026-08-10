@@ -1282,8 +1282,12 @@ async def main():
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption("Rainbow Connections")
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont(None, 20)
-    big_font = pygame.font.SysFont(None, 48)
+    # pygame.font.Font(None, size) loads pygame's bundled default font
+    # directly. pygame.font.SysFont() instead tries to match an OS-installed
+    # font, which doesn't exist under pygbag's browser/WASM runtime and
+    # hangs the whole app silently there (desktop Python is unaffected).
+    font = pygame.font.Font(None, 20)
+    big_font = pygame.font.Font(None, 48)
 
     game = Game()
 
