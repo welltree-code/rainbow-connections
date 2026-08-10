@@ -1276,24 +1276,7 @@ class Game:
         self.__init__()
 
 
-# pygbag's own documented example calls pygame.init()/set_mode() at
-# synchronous module scope, before the async game loop is ever defined -
-# calling them from inside the async main() instead left pygame partially
-# initialized under pygbag's web runtime (pygame.init was simply missing
-# from the module), even though desktop Python doesn't care either way.
-pygame.init()
-screen = pygame.display.set_mode(WINDOW_SIZE)
-pygame.display.set_caption("Rainbow Connections")
-clock = pygame.time.Clock()
-# pygame.font.Font(None, size) loads pygame's bundled default font
-# directly. pygame.font.SysFont() instead tries to match an OS-installed
-# font, which doesn't exist under pygbag's browser/WASM runtime and
-# hangs the whole app silently there (desktop Python is unaffected).
-font = pygame.font.Font(None, 20)
-big_font = pygame.font.Font(None, 48)
-
-
-async def main():
+async def main(screen, clock, font, big_font):
     game = Game()
 
     running = True
@@ -1402,4 +1385,10 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    pygame.init()
+    screen = pygame.display.set_mode(WINDOW_SIZE)
+    pygame.display.set_caption("Rainbow Connections")
+    clock = pygame.time.Clock()
+    font = pygame.font.Font(None, 20)
+    big_font = pygame.font.Font(None, 48)
+    asyncio.run(main(screen, clock, font, big_font))
