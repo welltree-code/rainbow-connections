@@ -28,25 +28,12 @@ Not yet implemented (see Rules.md): end-of-game bridge removal.
 """
 
 import asyncio
-import importlib
 import math
 import os
 import random
 import sys
 
 import pygame
-
-# Loaded via importlib rather than `import pygame.gfxdraw` or
-# `from pygame import gfxdraw`: pygbag's web-build dependency scanner
-# misreads a literal dotted "import pygame.gfxdraw" statement as a request
-# for a separate PyPI package literally named "pygame.gfxdraw", fails to
-# find it, and that failure kills the whole interpreter in the browser -
-# and separately, this pygame-ce web build doesn't pre-import the gfxdraw
-# submodule into the pygame package namespace, so `from pygame import
-# gfxdraw` also fails there with ImportError (desktop Python is unaffected
-# by either issue). importlib.import_module has the same effect as
-# `import pygame.gfxdraw` without tripping the scanner.
-gfxdraw = importlib.import_module("pygame.gfxdraw")
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -462,7 +449,7 @@ def draw_cell_number(surface, font, poly, edge_index, value, is_up):
 def draw_smooth_polygon_outline(surface, poly, color, width):
     """An anti-aliased polygon outline. Plain pygame.draw.polygon outlines
     aren't anti-aliased and look jagged along the triangle's diagonal
-    edges, so this instead stacks several concentric pygame.gfxdraw
+    edges, so this instead stacks several concentric pygame.draw.aalines
     outlines (which are anti-aliased) to build up a smooth, thick border.
     """
     cx = sum(v[0] for v in poly) / len(poly)
@@ -476,7 +463,7 @@ def draw_smooth_polygon_outline(surface, poly, color, width):
             dist = math.hypot(dx, dy) or 1
             factor = (dist + inset) / dist
             ring.append((round(cx + dx * factor), round(cy + dy * factor)))
-        gfxdraw.aapolygon(surface, ring, color)
+        pygame.draw.aalines(surface, color, True, ring)
 
 
 def draw_smooth_line(surface, color, a, b, width):
@@ -500,8 +487,8 @@ def draw_smooth_filled_polygon(surface, poly, color):
     blends one anti-aliased pass of the same color exactly on the true
     boundary on top of the hard-edged fill."""
     points = [(round(x), round(y)) for x, y in poly]
-    gfxdraw.filled_polygon(surface, points, color)
-    gfxdraw.aapolygon(surface, points, color)
+    pygame.draw.polygon(surface, color, points)
+    pygame.draw.aalines(surface, color, True, points)
 
 
 def draw_board(surface, board, font):
@@ -677,8 +664,8 @@ def draw_rainbow_arcs(surface, center, outer_radius, band_width):
     sits at the center point. Each band is a filled ring polygon (an outer
     semicircle arc joined to an inner one) rather than a stroked arc -
     pygame.draw.arc gets visibly speckled at large widths, and even
-    stacking many 1px gfxdraw arcs leaves a dotted moire pattern since
-    adjacent integer radii don't fully tile a curve this shallow.
+    stacking many 1px-radius-apart arcs leaves a dotted moire pattern
+    since adjacent integer radii don't fully tile a curve this shallow.
     """
     cx, cy = center
     steps = 120
