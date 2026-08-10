@@ -28,13 +28,25 @@ Not yet implemented (see Rules.md): end-of-game bridge removal.
 """
 
 import asyncio
+import importlib
 import math
 import os
 import random
 import sys
 
 import pygame
-import pygame.gfxdraw
+
+# Loaded via importlib rather than `import pygame.gfxdraw` or
+# `from pygame import gfxdraw`: pygbag's web-build dependency scanner
+# misreads a literal dotted "import pygame.gfxdraw" statement as a request
+# for a separate PyPI package literally named "pygame.gfxdraw", fails to
+# find it, and that failure kills the whole interpreter in the browser -
+# and separately, this pygame-ce web build doesn't pre-import the gfxdraw
+# submodule into the pygame package namespace, so `from pygame import
+# gfxdraw` also fails there with ImportError (desktop Python is unaffected
+# by either issue). importlib.import_module has the same effect as
+# `import pygame.gfxdraw` without tripping the scanner.
+gfxdraw = importlib.import_module("pygame.gfxdraw")
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -464,7 +476,7 @@ def draw_smooth_polygon_outline(surface, poly, color, width):
             dist = math.hypot(dx, dy) or 1
             factor = (dist + inset) / dist
             ring.append((round(cx + dx * factor), round(cy + dy * factor)))
-        pygame.gfxdraw.aapolygon(surface, ring, color)
+        gfxdraw.aapolygon(surface, ring, color)
 
 
 def draw_smooth_line(surface, color, a, b, width):
@@ -488,8 +500,8 @@ def draw_smooth_filled_polygon(surface, poly, color):
     blends one anti-aliased pass of the same color exactly on the true
     boundary on top of the hard-edged fill."""
     points = [(round(x), round(y)) for x, y in poly]
-    pygame.gfxdraw.filled_polygon(surface, points, color)
-    pygame.gfxdraw.aapolygon(surface, points, color)
+    gfxdraw.filled_polygon(surface, points, color)
+    gfxdraw.aapolygon(surface, points, color)
 
 
 def draw_board(surface, board, font):
